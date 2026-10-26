@@ -1,14 +1,10 @@
 TAX_RATES = {"NG": 0.075, "US": 0.0, "GB": 0.2}
 
 
-def process_order(order, today):
-    """Validate an order, price it, and return a summary dict."""
-    errors = []
-    items = order.get("items") or []
-    if not items:
-        errors.append("no items")
-
+def _price_items(items):
+    """Return (subtotal, errors). Zero-quantity items are skipped silently."""
     subtotal = 0
+    errors = []
     for item in items:
         qty = item.get("qty", 1)
         price = item.get("price", 0)
@@ -18,6 +14,18 @@ def process_order(order, today):
         if qty == 0:
             continue
         subtotal += qty * price
+    return subtotal, errors
+
+
+def process_order(order, today):
+    """Validate an order, price it, and return a summary dict."""
+    errors = []
+    items = order.get("items") or []
+    if not items:
+        errors.append("no items")
+
+    subtotal, item_errors = _price_items(items)
+    errors.extend(item_errors)
 
     discount = 0
     coupon = (order.get("coupon") or "").strip().upper()
