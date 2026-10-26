@@ -144,3 +144,18 @@ def test_discounted_receipt_layout():
     assert result["receipt"] == (
         "A x1 @ 200.00\nSubtotal: 200.00\nDiscount: -20.00\nTax: 36.00\nShipping: 0.00\nTotal: 216.00"
     )
+
+
+def test_summer_coupon_covers_all_of_august():
+    assert process_order(order(coupon="SUMMER"), date(2026, 8, 31))["ok"] is True
+    assert process_order(order(coupon="SUMMER"), date(2026, 6, 30))["ok"] is True
+
+
+def test_flat5_cap_boundaries():
+    def discount_for(price):
+        items = [{"sku": "A", "qty": 1, "price": price}]
+        return process_order({"items": items, "coupon": "FLAT5", "country": "US"}, WINTER)["discount"]
+
+    assert discount_for(4.5) == 4.5   # capped just below the coupon value
+    assert discount_for(5) == 5       # exactly equal
+    assert discount_for(5.5) == 5     # coupon fully applies

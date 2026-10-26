@@ -13,12 +13,13 @@ a receipt. This repo shows it being split up safely.
 | 2 | 17 characterization tests, all green on the original |
 | 3-7 | One extraction per commit, tests green after each |
 | 8 | This README |
+| 9 | Two extra tests found by a mutation check (they also pass on the original) |
 
 Run `python -m pytest -q` at any commit after #2 and it passes.
 
 ## The tests
 
-They are *characterization* tests: they pin down what the code does today, not
+They are *characterization* tests (19 in the end; the last two were added after a mutation check showed gaps): they pin down what the code does today, not
 what it ought to do. That includes odd corners that I would not design on purpose:
 
 - Zero-quantity items vanish silently from the subtotal and the receipt.
