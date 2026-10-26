@@ -1,4 +1,10 @@
 TAX_RATES = {"NG": 0.075, "US": 0.0, "GB": 0.2}
+DEFAULT_TAX_RATE = 0.1
+FREE_SHIPPING_THRESHOLD = 100
+DOMESTIC_COUNTRY = "NG"
+DOMESTIC_SHIPPING_FEE = 10
+INTERNATIONAL_SHIPPING_FEE = 25
+SUMMER_MONTHS = (6, 7, 8)
 
 
 def _price_items(items):
@@ -28,7 +34,7 @@ def _calculate_discount(coupon_code, subtotal, today):
         elif coupon == "FLAT5":
             discount = 5
         elif coupon == "SUMMER":
-            if today.month in (6, 7, 8):
+            if today.month in SUMMER_MONTHS:
                 discount = subtotal * 0.2
             else:
                 errors.append("coupon expired")
@@ -40,17 +46,17 @@ def _calculate_discount(coupon_code, subtotal, today):
 
 
 def _calculate_tax(amount, country):
-    return round(amount * TAX_RATES.get(country, 0.1), 2)
+    return round(amount * TAX_RATES.get(country, DEFAULT_TAX_RATE), 2)
 
 
 def _calculate_shipping(amount, country, is_pickup):
     if is_pickup:
         return 0
-    if amount >= 100:
+    if amount >= FREE_SHIPPING_THRESHOLD:
         return 0
-    if country == "NG":
-        return 10
-    return 25
+    if country == DOMESTIC_COUNTRY:
+        return DOMESTIC_SHIPPING_FEE
+    return INTERNATIONAL_SHIPPING_FEE
 
 
 def _format_receipt(items, subtotal, discount, tax, shipping, total):
@@ -82,7 +88,7 @@ def process_order(order, today):
     errors.extend(coupon_errors)
     discounted = subtotal - discount
 
-    country = order.get("country", "NG")
+    country = order.get("country", DOMESTIC_COUNTRY)
     tax = _calculate_tax(discounted, country)
     shipping = _calculate_shipping(discounted, country, order.get("pickup"))
 
