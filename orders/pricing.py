@@ -17,18 +17,11 @@ def _price_items(items):
     return subtotal, errors
 
 
-def process_order(order, today):
-    """Validate an order, price it, and return a summary dict."""
-    errors = []
-    items = order.get("items") or []
-    if not items:
-        errors.append("no items")
-
-    subtotal, item_errors = _price_items(items)
-    errors.extend(item_errors)
-
+def _calculate_discount(coupon_code, subtotal, today):
+    """Return (discount, errors). The discount never exceeds the subtotal."""
     discount = 0
-    coupon = (order.get("coupon") or "").strip().upper()
+    errors = []
+    coupon = (coupon_code or "").strip().upper()
     if coupon:
         if coupon == "SAVE10":
             discount = subtotal * 0.10
@@ -43,6 +36,21 @@ def process_order(order, today):
             errors.append("unknown coupon")
     if discount > subtotal:
         discount = subtotal
+    return discount, errors
+
+
+def process_order(order, today):
+    """Validate an order, price it, and return a summary dict."""
+    errors = []
+    items = order.get("items") or []
+    if not items:
+        errors.append("no items")
+
+    subtotal, item_errors = _price_items(items)
+    errors.extend(item_errors)
+
+    discount, coupon_errors = _calculate_discount(order.get("coupon"), subtotal, today)
+    errors.extend(coupon_errors)
     discounted = subtotal - discount
 
     country = order.get("country", "NG")
