@@ -53,6 +53,21 @@ def _calculate_shipping(amount, country, is_pickup):
     return 25
 
 
+def _format_receipt(items, subtotal, discount, tax, shipping, total):
+    lines = []
+    for item in items:
+        qty = item.get("qty", 1)
+        if qty > 0:
+            lines.append("%s x%d @ %.2f" % (item.get("sku", "?"), qty, item.get("price", 0)))
+    lines.append("Subtotal: %.2f" % subtotal)
+    if discount:
+        lines.append("Discount: -%.2f" % discount)
+    lines.append("Tax: %.2f" % tax)
+    lines.append("Shipping: %.2f" % shipping)
+    lines.append("Total: %.2f" % total)
+    return "\n".join(lines)
+
+
 def process_order(order, today):
     """Validate an order, price it, and return a summary dict."""
     errors = []
@@ -76,17 +91,7 @@ def process_order(order, today):
     if errors:
         return {"ok": False, "errors": errors}
 
-    lines = []
-    for item in items:
-        qty = item.get("qty", 1)
-        if qty > 0:
-            lines.append("%s x%d @ %.2f" % (item.get("sku", "?"), qty, item.get("price", 0)))
-    lines.append("Subtotal: %.2f" % subtotal)
-    if discount:
-        lines.append("Discount: -%.2f" % discount)
-    lines.append("Tax: %.2f" % tax)
-    lines.append("Shipping: %.2f" % shipping)
-    lines.append("Total: %.2f" % total)
+    receipt = _format_receipt(items, subtotal, discount, tax, shipping, total)
 
     return {
         "ok": True,
@@ -95,5 +100,5 @@ def process_order(order, today):
         "tax": tax,
         "shipping": shipping,
         "total": total,
-        "receipt": "\n".join(lines),
+        "receipt": receipt,
     }
