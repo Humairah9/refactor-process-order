@@ -39,6 +39,20 @@ def _calculate_discount(coupon_code, subtotal, today):
     return discount, errors
 
 
+def _calculate_tax(amount, country):
+    return round(amount * TAX_RATES.get(country, 0.1), 2)
+
+
+def _calculate_shipping(amount, country, is_pickup):
+    if is_pickup:
+        return 0
+    if amount >= 100:
+        return 0
+    if country == "NG":
+        return 10
+    return 25
+
+
 def process_order(order, today):
     """Validate an order, price it, and return a summary dict."""
     errors = []
@@ -54,17 +68,8 @@ def process_order(order, today):
     discounted = subtotal - discount
 
     country = order.get("country", "NG")
-    rate = TAX_RATES.get(country, 0.1)
-    tax = round(discounted * rate, 2)
-
-    if order.get("pickup"):
-        shipping = 0
-    elif discounted >= 100:
-        shipping = 0
-    elif country == "NG":
-        shipping = 10
-    else:
-        shipping = 25
+    tax = _calculate_tax(discounted, country)
+    shipping = _calculate_shipping(discounted, country, order.get("pickup"))
 
     total = round(discounted + tax + shipping, 2)
 
